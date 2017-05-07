@@ -77,17 +77,11 @@ def set_message_last_post(cr, uid, pool, models):
     if type(models) is not list:
         models = [models]
     for model in models:
-        model_pool = pool[model]
-        cr.execute('SELECT id FROM {table}'.format(table=model_pool._table))
-        obj_ids = [row[0] for row in cr.fetchall()]
-        for res_id, value in get_last_post_for_model(
-                cr, uid, obj_ids, model_pool).iteritems():
-            if not value:
-                continue
-            cr.execute(
-                "UPDATE {} SET message_last_post = %s WHERE id = %s".format(
-                    model_pool._table),
-                (datetime.strptime(value, DATETIME_FMT), res_id))
+        cr.execute("""
+            with mm_data as( 
+                select res_id, max(date) as date from mail_message WHERE model='%s' group by res_id
+            )
+            UPDATE %s so set message_last_post = mm.date from mm_data mm WHERE so.id = mm.res_id""" %(model, model_pool._table))
 
 
 def update_aliases(
