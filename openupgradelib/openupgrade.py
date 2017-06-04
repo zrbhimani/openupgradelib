@@ -526,6 +526,7 @@ def delete_model_workflow(cr, model):
     Forcefully remove active workflows for obsolete models,
     to prevent foreign key issues when the orm deletes the model.
     """
+    logged_query(cr, "SET session_replication_role = replica;")
     logged_query(
         cr,
         "DELETE FROM wkf_workitem WHERE act_id in "
@@ -536,8 +537,12 @@ def delete_model_workflow(cr, model):
         ")", (model,))
     logged_query(
         cr,
+        "DELETE FROM wkf_instance WHERE "
+        "res_type = %s " (model,))
+    logged_query(
+        cr,
         "DELETE FROM wkf WHERE osv = %s", (model,))
-
+    logged_query(cr, "SET session_replication_role = DEFAULT;")
 
 def warn_possible_dataloss(cr, pool, old_module, fields):
     """

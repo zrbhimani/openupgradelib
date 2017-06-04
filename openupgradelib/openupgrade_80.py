@@ -77,6 +77,7 @@ def set_message_last_post(cr, uid, pool, models):
     if type(models) is not list:
         models = [models]
     for model in models:
+        model_pool = pool[model]
         cr.execute("""
             with mm_data as( 
                 select res_id, max(date) as date from mail_message WHERE model='%s' group by res_id
